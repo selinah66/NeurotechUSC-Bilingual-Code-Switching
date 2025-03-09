@@ -118,15 +118,17 @@
      print(eye_tracking_data.isnull().sum())
      ```
    - If there are missing values, either remove missing values:
+   ```python
    eye_tracking_cleaned = df.dropna()
-   
+   ```
    - OR impute missing values using the mean: (recommended, to not lose sample size/data)
+   ```python
    from sklearn.impute import SimpleImputer
    
    numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns   # isolates columns with numeric values
    numeric_imputer = SimpleImputer(strategy='mean')
    df_numeric_imputed = pd.DataFrame(numeric_imputer.fit_transform(df[numeric_cols]), columns=numeric_cols)
-
+   ```
    * Note: Can also visualize distributions of original data, after cleaning, and after dropping na to compare), ask AI
 
     - Check for Outliers/Anomalies:
