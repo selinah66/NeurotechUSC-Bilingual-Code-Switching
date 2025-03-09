@@ -26,8 +26,8 @@ git clone https://github.com/selinah66/NeurotechUSC-Bilingual-Code-Switching.git
 Run the project code in Python with any Python IDE, eg. Visual Studio Code, PyCharm, or XCode, and the R-scripts in RStudio (making sure both RStudio and R are installed)
 
 ## Contributing to the Repository
-1. Fork the respository: Click 'Fork' to create a copy in your account
+1. Fork the repository: Click 'Fork' to create a copy in your account
 2. Create a new branch labelled with your new update: 'git checkout -b (folder path)'
 3. Commit your changes: 'git commit -m "Describe your update" '
 4. Push to the branch: 'git push (folder path)')
-5. Open a Pull Request by going to the original respository and clicking "Pull requests" -> "New pull request" to submit your changes.
+5. Open a Pull Request by going to the original repository and clicking "Pull requests" -> "New pull request" to submit your changes.
