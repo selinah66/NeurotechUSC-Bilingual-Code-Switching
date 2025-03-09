@@ -10,12 +10,12 @@
 
 1. **Visit Our repository:**
 
-   - [selinah66/NeurotechUSC-Bilingual-Code... - EyeTrackingData](https://github.com/selinah66/NeurotechUSC-Bilingual-Code-Switching)
+   - [selinah66/NeurotechUSC-Bilingual-Code... - EyeMovementData](https://github.com/selinah66/NeurotechUSC-Bilingual-Code-Switching/EyeMovementData)
 
-2. **Download the Eye Tracking data files from the EyeTrackingData folder:**
+2. **Download the Eye Tracking data files from the EyeMovementData folder:**
 
    a) **Data Location:** 
-      - Navigate to the EyeTrackingData folder.
+      - Navigate to the EyeMovementData folder.
 
    b) **Data Files:**
       Contains two data files:
