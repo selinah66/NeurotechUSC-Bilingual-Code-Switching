@@ -1,6 +1,6 @@
 **NOTE:** You are encouraged to experiment with different visualization techniques and quality checks. You can use AI assistants to help troubleshoot issues, explain unfamiliar concepts, or suggest additional analyses.
 
-**AI TOOLS:** ChatGPT, Claude, MetaAI, Poe.com, etc.
+**AI TOOLS:** ChatGPT, Perplexity, Claude, MetaAI, Poe.com, etc.
 
 ---
 
@@ -63,17 +63,24 @@
    ```
     ** Recommended libraries for eye-tracking: SciPy, PyJanitor, DataPrep, PyGaze, PyMovements, etc.
 
-2. **Load the Eye Tracking data:**
+   2. **Load the Eye Tracking data:**
 
-   - If your data is in CSV format:
+      - If your data is in CSV format:
 
-     ```python
-     # Adjust the file path as needed, change eye_tracking_data to name of your dataframe
-     eye_tracking_data = pd.read_csv('path/to/your/IA_data.csv')
-     ```
-   **AI Assistant Tip:** If you encounter issues or need help with specific file formats, you can ask:
+        ```python
+        # Adjust the file path as needed, change eye_tracking_data to name of your dataframe
+        eye_tracking_data = pd.read_csv('path/to/your/IA_data.csv')
+         ```
+        
+       - If your data is in .XLSX (excel) format:
+    
+       ```python
+        eye_tracking_data = pd.read_excel('path/to/your/IA_data.xlsx')
+        ```
+      
+      **AI Assistant Tip:** If you encounter issues or need help with specific file formats, you can ask:
 
-   *"How do I load eye-tracking data from a CSV file using Python?"*
+      *"How do I load eye-tracking data from a CSV file using Python?"*
 
 #### **Step 4: Visualizing the Data**
 
@@ -104,80 +111,79 @@
     plt.title('Fixation Count vs. Saccade Amplitude')
     plt.show()
      ```
-
+   
    **AI Assistant Tip:** To learn more about different visualization techniques, ask:
    *"What are some effective ways to visualize Eye-Tracking data in Python?"*
 
 #### **Step 5: Quality Check**
 
-1. **Check for missing data or anomalies:**
+1. **Check for missing data:**
 
    - Checking missing data:
 
      ```python
      print(eye_tracking_data.isnull().sum())
      ```
-   - If there are missing values, either remove missing values:
-   eye_tracking_cleaned = df.dropna()
+   - Drop columns with excessive missing values:
    
-   - OR impute missing values using the mean: (recommended, to not lose sample size/data)
-   from sklearn.impute import SimpleImputer
+    ```python
+    threshold = 20 ## Modify % of missing values
+    missing_percentage = (eye_tracking_data.isnull().sum() / len(eye_tracking_data)) * 100 
+    columns_to_drop = missing_percentage[missing_percentage > threshold].index
+    print("Columns dropped:", list(columns_to_drop))  # Print the columns being dropped
+    data_cleaned = eye_tracking_data.drop(columns=columns_to_drop)
+   ```
+     eye_tracking_cleaned = df.dropna()
    
-   numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns   # isolates columns with numeric values
-   numeric_imputer = SimpleImputer(strategy='mean')
-   df_numeric_imputed = pd.DataFrame(numeric_imputer.fit_transform(df[numeric_cols]), columns=numeric_cols)
+   - Impute remaining numeric columns: (recommended, to not lose sample size/data)
+   ```python 
+    from sklearn.impute import SimpleImputer
 
-   * Note: Can also visualize distributions of original data, after cleaning, and after dropping na to compare), ask AI
+    numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns   # isolates columns with numeric values
+    numeric_imputer = SimpleImputer(strategy='mean')
+    df_numeric_imputed = pd.DataFrame(numeric_imputer.fit_transform(df[numeric_cols]), columns=numeric_cols)
+    ```
+   * Note: Can also visualize distributions of original data, after cleaning (dropping missing values), and after imputing to compare distributions), 
+    ask AI how to do this *
 
-    - Check for Outliers/Anomalies:
+2. **Check for and Remove Outliers/Anomalies:**
+   (df = insert name of your dataset)
+
+   Example for Regression Path Duration:
+   ```python
+    def validate_regression_path(regression_durations, min_duration=50, max_duration=5000):
+      """
+      Check if regression path durations are physiologically plausible.
+      Typically between 50ms and 5000ms for reading tasks.
+      """
+      return (regression_durations >= min_duration) & (regression_durations <= max_duration)
    
+    # Apply to your selected eye tracking feature, eg. regression path duration
+    df_cleaned = remove_outliers(df, 'IA_REGRESSION_PATH_DURATION', method='iqr')
+    print(f"Original data: {len(df)}, After removing outliers: {len(df_cleaned)}")
+    ```
+   * Note: Can also visualize distributions of original data, before and after cleaning (removing outliers) to compare distributions), ask AI *
 
-2. **Analyze Signal-to-Noise Ratio (SNR):**
+3. **Event Specific Filtering:**
+(done according to each eye tracking event data, and to physiologically plausible values for each event)
 
-   - **Note:** Estimating SNR can be complex; consider using variance or standard deviation as proxies.
+   ```python
+    def validate_regression_path(regression_durations, min_duration=50, max_duration=5000):
+        """
+        Check if all regression path durations are physiologically plausible.
+        Typically between 50ms and 5000ms for reading tasks.
+        """
+        return (regression_durations >= min_duration) & (regression_durations <= max_duration)
 
-   - For MNE:
+    # Apply to your selected eye tracking feature, eg. regression path duration
+    is_valid = validate_regression_path(rpd)
+    print(f"All durations are valid: {is_valid}")
+    ```
+    * Note: Can also add code for removing invalid data outside of plausible range, ask AI for help *
 
-     ```python
-     # This function is not built-in; you'd need to define it or use alternatives
-     # Here's a simple way to check signal variance across channels
-     import numpy as np
-     data = raw.get_data()
-     channel_variances = np.var(data, axis=1)
-     plt.bar(raw.ch_names, channel_variances)
-     plt.xlabel('Channels')
-     plt.ylabel('Variance')
-     plt.title('Channel Variances')
-     plt.show()
-     ```
+### **Task 2: Feature Engineering and Selection**
 
-3. **Identify and handle artifacts:**
-
-   - **Detect flat channels:**
-
-     ```python
-     flat_channels = mne.preprocessing.find_flat_channels(raw)
-     print(f"Flat channels: {flat_channels['flat']}")
-     ```
-
-   - **Detect bad segments:**
-
-     ```python
-     from mne.preprocessing import annotate_bad_segments
-     annotations = annotate_bad_segments(raw, picks='eeg', verbose=True)
-     raw.set_annotations(annotations)
-     raw.plot()
-     ```
-
-   **AI Assistant Tip:** For more advanced quality checks or artifact removal techniques, you can ask:
-
-   *"What are common artifacts in EEG data, and how can I detect and remove them using Python?"*
-   *"How can I apply filtering to clean EEG data?"*
----
-
-### **Task 2: Whitening EEG Data Using PCA**
-
-#### **Step 1: Understanding PCA Whitening**
+#### **Step 1: Feature Engineering **
 
 1. **Principal Component Analysis (PCA)** is a dimensionality reduction technique that can also be used for whitening data.
 
@@ -189,9 +195,9 @@
 
    *"How do I perform data whitening using PCA in Python?"*
 
-#### **Step 2: Preprocessing**
+#### **Step 2: Feature Selection**
 
-1. **Ensure your EEG data is properly formatted:**
+1. **Correlation Analysis**
 
    - The data should be in a NumPy array or pandas DataFrame.
 
@@ -203,156 +209,25 @@
    from sklearn.preprocessing import StandardScaler
 
    scaler = StandardScaler()
-   eeg_data_standardized = scaler.fit_transform(eeg_data)
+   etd_standardized = scaler.fit_transform(eye_tracking_data)
    ```
 
-#### **Step 3: Applying PCA Whitening**
+### **Task 3: Feature Extraction and Machine Learning Modeling**
 
-1. **Import PCA from scikit-learn:**
-
-   ```python
-   from sklearn.decomposition import PCA
-   ```
-
-2. **Apply PCA with whitening:**
-
-   ```python
-   pca = PCA(whiten=True)
-   eeg_data_whitened = pca.fit_transform(eeg_data_standardized)
-   ```
-
-3. **Inspect the explained variance ratio:**
-
-   ```python
-   plt.plot(np.cumsum(pca.explained_variance_ratio_))
-   plt.xlabel('Number of Components')
-   plt.ylabel('Cumulative Explained Variance')
-   plt.title('Explained Variance by PCA Components')
-   plt.show()
-   ```
-
-   **AI Assistant Tip:** To understand the importance of components, ask:
-
-   *"How many principal components should I keep for my EEG data?"*
-
-   *"What does the explained variance ratio tell me in PCA?"*
-
-#### **Step 4: Saving or Using the Whitened Data**
-
-1. **Save the whitened data for future use:**
-
-   ```python
-   np.save('eeg_data_whitened.npy', eeg_data_whitened)
-   ```
-
-2. **Proceed to the next task using the whitened data.**
-
----
-
-### **Task 3: Independent Component Analysis (ICA) on Whitened Data**
-
-#### **Step 1: Understanding ICA**
-
-1. **Independent Component Analysis (ICA)** separates multivariate signals into additive subcomponents that are maximally independent.
-
-   **AI Assistant Tip:** If you need more information on ICA, you can ask:
-
-   *"What is Independent Component Analysis and how is it used in EEG data processing?"*
-
-#### **Step 2: Importing Necessary Libraries**
-
-1. **Use scikit-learn or MNE for ICA:**
-
-   ```python
-   from sklearn.decomposition import FastICA
-   # or using MNE
-   import mne
-   ```
-
-#### **Step 3: Applying ICA**
-
-1. **Using scikit-learn's FastICA:**
-
-   ```python
-   ica = FastICA(n_components=number_of_components, random_state=0)
-   eeg_data_ica = ica.fit_transform(eeg_data_whitened)
-   ```
-
-2. **Using MNE's ICA implementation:**
-
-   ```python
-   ica = mne.preprocessing.ICA(n_components=number_of_components, random_state=0)
-   ica.fit(raw)
-   ```
-
-3. **Identify and Remove Artifacts:**
-
-   - **Plot ICA components:**
-
-     ```python
-     ica.plot_components()
-     ```
-
-   - **Exclude artifact components (e.g., eye blinks, heartbeats):**
-
-     ```python
-     ica.exclude = [0, 1]  # Indices of components identified as artifacts
-     raw_corrected = raw.copy()
-     ica.apply(raw_corrected)
-     ```
-
-   **AI Assistant Tip:** To learn how to identify artifacts in ICA components, ask:
-
-   *"How do I identify and remove EOG and ECG artifacts using ICA in EEG data?"*
-
-#### **Step 4: Saving or Using the Cleaned Data**
-
-1. **Save the ICA-cleaned data:**
-
-   - For scikit-learn:
-
-     ```python
-     np.save('eeg_data_ica_cleaned.npy', eeg_data_ica)
-     ```
-
-   - For MNE:
-
-     ```python
-     raw_corrected.save('raw_ica_cleaned.fif', overwrite=True)
-     ```
-
----
-
-### **Task 4: Feature Extraction and Machine Learning Modeling**
-
-#### **Step 1: Preparing the Cleaned Data**
-
-1. **Load the cleaned EEG data from previous steps.**
-
-   ```python
-   # For NumPy arrays
-   eeg_data_cleaned = np.load('eeg_data_ica_cleaned.npy')
-
-   # For MNE Raw objects
-   raw_cleaned = mne.io.read_raw_fif('raw_ica_cleaned.fif', preload=True)
-   ```
-
-#### **Step 2: Feature Extraction**
+#### **Step 1: Feature Extraction**
 
 1. **Choose features to extract:**
 
-   - **Spectrograms**
+   - **Fixation Duration Ratio**
    - **Raw signal segments**
    - **Statistical features (mean, variance, etc.)**
    - **Frequency domain features**
 
-2. **Extract Spectrogram Features:**
+2. **Extract Fixation Duration Ratio:**
 
    ```python
-   from scipy.signal import spectrogram
-
-   f, t, Sxx = spectrogram(eeg_data_cleaned, fs=sampling_rate)
-   # fs is the sampling frequency
+   etd_cleaned['Fixation Duration Ratio'] = etd_cleaned['IA Second Fixation Duration'] / etd_cleaned['IA First Fixation Duration']
+   
    ```
 
 3. **Flatten or Reshape Features for Modeling:**
@@ -363,9 +238,7 @@
 
    **AI Assistant Tip:** To explore different feature extraction methods, ask:
 
-   *"What are effective feature extraction techniques for EEG data?"*
-
-   *"How do I extract frequency domain features from EEG signals?"*
+   *"What are effective feature extraction techniques for Eye Tracking data?"*
 
 #### **Step 3: Building Machine Learning Models**
 
@@ -377,7 +250,7 @@
    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
    ```
 
-   - **Note:** You'll need labels corresponding to your EEG data.
+   - **Note:** You'll need labels corresponding to your eye tracking data, eg 1: code switching, 0: no code switching.
 
 2. **Choose a machine learning model:**
 
@@ -388,7 +261,7 @@
    ```python
    from sklearn.ensemble import RandomForestClassifier
 
-   clf = RandomForestClassifier(n_estimators=100, random_state=42)
+   clf = RandomForestClassifier(n_estimators=200, random_state=42)
    clf.fit(X_train, y_train)
    ```
 
@@ -404,9 +277,9 @@
 
    **AI Assistant Tip:** If you need help with model selection or evaluation, ask:
 
-   *"What machine learning models are suitable for EEG classification tasks?"*
+   *"What machine learning models are suitable for bilingual code switching eye tracking classification tasks?"*
 
-   *"How can I evaluate the performance of my EEG classification model?"*
+   *"How can I evaluate the performance of my eye tracking classification model?"*
 
 #### **Step 4: Experimentation and Improvement**
 
