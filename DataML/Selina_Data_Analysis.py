@@ -147,3 +147,63 @@ def short_fixations(fixation_count, threshold=50):
 
 valid_fixation = short_fixations(fix)
 print(f"All fixations are valid: {valid_fixation}")
+
+# Initial Feature Engineering
+# L2 Proficiency vs. IA Dwell Time
+l2_proficiency = etd_cleaned['L2 PROFICIENCY']
+dwell_time = etd_cleaned['IA_DWELL_TIME']
+
+plt.figure(figsize=(10, 6))
+plt.bar(etd_cleaned['L2 PROFICIENCY'], etd_cleaned['IA_DWELL_TIME'], color='skyblue')
+plt.xlabel('L2 Proficiency')
+plt.ylabel('IA Dwell Time (ms)')
+plt.title('IA Dwell Time vs. L2 Proficiency')
+plt.show()
+
+# L2 Proficiency vs. IA Fixation Count
+fixation_count = etd_cleaned['IA_FIXATION_COUNT']
+
+plt.figure(figsize=(10, 6))
+plt.bar(etd_cleaned['L2 PROFICIENCY'], fixation_count, color='black')
+plt.xlabel('L2 Proficiency')
+plt.ylabel('IA Fixation Count (ms)')
+plt.title('IA Fixation Count vs. L2 Proficiency')
+plt.show()
+
+# L2 Proficiency vs. Regression In/Out
+grouped_data = etd_cleaned.groupby('L2 PROFICIENCY').agg({
+    'IA_REGRESSION_IN_COUNT': 'mean',
+    'IA_REGRESSION_OUT_COUNT': 'mean'
+}).reset_index()
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+barWidth = 0.35
+positions1 = np.arange(len(grouped_data))
+positions2 = [x + barWidth for x in positions1]
+
+ax.bar(positions1, grouped_data['IA_REGRESSION_IN_COUNT'], width=barWidth,
+       color='skyblue', label='Regression In')
+ax.bar(positions2, grouped_data['IA_REGRESSION_OUT_COUNT'], width=barWidth,
+       color='lightgreen', label='Regression Out')
+
+ax.set_xlabel('L2 Proficiency Group')
+ax.set_ylabel('Average Regression Count')
+ax.set_title('Regression In/Out Count by L2 Proficiency Level')
+ax.set_xticks([r + barWidth/2 for r in range(len(grouped_data))])
+ax.set_xticklabels(grouped_data['L2 PROFICIENCY'])
+ax.legend()
+
+plt.grid(axis='y', alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+# No Code Switching Chinese vs. English IA Fixation Count
+fixation_count = etd_cleaned['IA_FIXATION_COUNT']
+
+plt.figure(figsize=(10, 6))
+plt.bar(etd_cleaned['CONDITION'], fixation_count, color='black')
+plt.xlabel('Language')
+plt.ylabel('IA Fixation Count (ms)')
+plt.title('IA Fixation Count vs. Language')
+plt.show()
