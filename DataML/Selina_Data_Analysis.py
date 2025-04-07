@@ -1,209 +1,123 @@
 import numpy as np
 import pandas as pd
-import sklearn
 import matplotlib.pyplot as plt
 import seaborn as sb
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
-# Step 1: Load the dataset
-etd = pd.read_excel('/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/EyeMovementData/IA_data.xlsx')
+# Step 1. Load the dataset
+file_path = '/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/EyeMovementData/IA_data.xlsx'
+etd = pd.read_excel(file_path)
 
-# Step 2: Initial Data Visualization
-# Plot 1. Scatter Plot: Fixation Count vs. First Saccade Amplitude
-plt.figure(figsize=(8, 6))
-plt.scatter(etd.iloc[:, 13], etd.iloc[:, 12])  # Assuming Column 14 is Fixation Count and Column 13 is First Saccade Amplitude
-plt.xlabel('Fixation Count')
-plt.ylabel('First Saccade Amplitude')
-plt.title('Fixation Count vs. Saccade Amplitude')
-plt.show()
+# Step 2. Target Separation, separate target FIRST to prevent data leakage
+target = etd['Switch Label'] if 'Switch Label' in etd else None
+features = etd.drop(columns=['Switch Label'], errors='ignore')
 
-# Plot 2. Bar Chart: Average fixation durations
-avg_first_fixation = etd.iloc[:, 7].mean()  # Assuming Column 8 is the first fixation duration
-avg_second_fixation = etd.iloc[:, 8].mean()
+# Step 3. Initial Data Inspection
+print("Initial shape:", features.shape)
+print("\nMissing values:\n", features.isna().sum())
 
-# Plot bar chart
-plt.bar(['First Fixation', 'Second Fixation'], [avg_first_fixation, avg_second_fixation])
-plt.xlabel('Fixation Type')
-plt.ylabel('Average Duration (s)')
-plt.title('Average Fixation Durations')
-plt.show()
+# Step 4. Numeric Feature Selection
+exclude_columns = [
+    'TRIAL_INDEX',       # Often contains trial identifiers (non-predictive)
+    'IA_ID',             # Item/area identifiers (categorical)
+    'RECORDING_SESSION_LABEL',    # Participant codes (e.g., 'Sub01')
+    'TRIAL_LABEL', # Label identifier for specific sentence
+    'IA_LABEL', # Specific Word/Character
+]
+features = features.drop(columns=exclude_columns, errors='ignore')
 
-# Plot 3. Stacked Bar Chart: Regression Paths vs. First Run Dwell Time
-# Calculate sums for each type of gaze behavior
-regression_path_time = etd.iloc[:, 10].sum()  # Assuming Column 11 is Regression Path Duration
-first_run_dwell_time = etd.iloc[:, 9].sum()  # Assuming Column 10 is First Run Dwell Time
+# Perform one-hot encoding for categorical columns
+categorical_cols = ['L2 PROFICIENCY', 'CONDITION', 'LANGUAGE']
+features = pd.get_dummies(features, columns=categorical_cols)
 
-# Plot stacked bar chart
-plt.bar(['Regression Paths', 'First Run Dwell Time'], [regression_path_time, first_run_dwell_time])
-plt.xlabel('Gaze Behavior')
-plt.ylabel('Total Time (s)')
-plt.title('Gaze Behavior Comparison')
-plt.show()
+print(features.dtypes)
 
-# Step 3: Data Cleaning & Quality Check
-# Check for missing values
-print(etd.isnull().sum())
+# Step 5. Missing Value Handling
+# Strategy: Remove high-missing columns first
+missing_pct = features.isna().mean() * 100
+high_missing = missing_pct[missing_pct > 30].index
+features = features.drop(columns=high_missing)
 
-# Percentage of missing values
-missing_percentage = (etd.isnull().sum() / len(etd)) * 100
-print(missing_percentage)
+# Remove critical missing rows
+critical_cols = [
+    'IA_REGRESSION_PATH_DURATION',
+    'IA_FIRST_FIXATION_DURATION',
+    'IA_FIRST_RUN_DWELL_TIME',
+    'IA_FIRST_SACCADE_AMPLITUDE'
+]
+features = features.dropna(subset=critical_cols)
 
-# Drop columns with >30% missing values (Cleaning)
-missing_threshold = 30
-columns_to_drop = missing_percentage[missing_percentage > missing_threshold].index
-print("Columns dropped:", list(columns_to_drop))  # Print the columns being dropped
-etd_cleaned = etd.drop(columns=columns_to_drop)
+# Impute remaining missing values
+imputer = SimpleImputer(strategy='mean')
+features_imputed = pd.DataFrame(imputer.fit_transform(features),
+                               columns=features.columns)
 
-# Impute remaining numeric columns
-numeric_cols = etd_cleaned.select_dtypes(include=['int64', 'float64']).columns
-numeric_imputer = SimpleImputer(strategy='mean')
-etd_numeric_imputed = etd_cleaned.copy()
-etd_numeric_imputed[numeric_cols] = numeric_imputer.fit_transform(etd[numeric_cols])
-
-# Density plot for comparison
+# Step 6. Imputation of Features Visualization (Before/After)
 plt.figure(figsize=(10, 6))
-sb.kdeplot(etd['IA_DWELL_TIME'].dropna(), label='Original', color='blue')
-sb.kdeplot(etd_cleaned['IA_DWELL_TIME'], label='After Cleaning', color='green')
-sb.kdeplot(etd_numeric_imputed['IA_DWELL_TIME'], label='After Imputation', color='orange')
-plt.title('Density Plot of IA_DWELL_TIME')
+sb.kdeplot(etd['IA_DWELL_TIME'], label='Original', color='blue')
+sb.kdeplot(features_imputed['IA_DWELL_TIME'], label='Cleaned', color='green')
+plt.title('Data Distribution Before/After Cleaning')
 plt.xlabel('IA_DWELL_TIME')
 plt.ylabel('Density')
 plt.legend()
 plt.show()
 
-# Check for outliers
+# Step 7. Feature Scaling
+scaler = StandardScaler()
+features_scaled = pd.DataFrame(scaler.fit_transform(features_imputed), columns=features_imputed.columns)
+
+# Step 8. Outlier Detection
 from scipy import stats
+z_scores = np.abs(stats.zscore(features_scaled))
+outliers_mask = (z_scores > 3).any(axis=1)
+print(f"Found {outliers_mask.sum()} potential outliers")
 
-def z_score_outliers(data, threshold=3):
-    z_scores = np.abs(stats.zscore(data))
-    outliers_mask = z_scores > threshold
-    return outliers_mask
+pca_features = [
+    'IA_FIRST_FIXATION_DURATION',
+    'IA_FIRST_RUN_DWELL_TIME',
+    'IA_REGRESSION_PATH_DURATION',
+    'IA_DWELL_TIME',
+    'IA_FIRST_SACCADE_AMPLITUDE',
+    'IA_FIXATION_COUNT',
+    'IA_SKIP',
+    'IA_FIRST_RUN_FIXATION_COUNT',
+    'IA_REGRESSION_IN_COUNT'
+]
 
-outliers_mask = z_score_outliers(etd_numeric_imputed.iloc[:, 10])
-print(f"Found {outliers_mask.sum()} outliers in regression path duration")
+# Filter the features DataFrame to include only the 10 IA features
+features_filtered = features_scaled[pca_features]
 
-# Remove outliers
-def remove_outliers(df, column, method='iqr', threshold=1.5):
-    mask = z_score_outliers(df[column], threshold)
+# Step 9. Principal Component Analysis
+pca = PCA(n_components=0.95)  # Automatically select components to explain 95% variance
+features_pca = pca.fit_transform(features_filtered)
+explained_variance = pca.explained_variance_ratio_
 
-    return df[~mask]
+loadings = pd.DataFrame(
+    pca.components_.T,
+    columns=[f'PC{i+1}' for i in range(len(pca.components_))],
+    index=pca_features
+)
 
-# Apply to regression path duration
-etd_cleaned = remove_outliers(etd_numeric_imputed, 'IA_REGRESSION_PATH_DURATION', method='iqr')
-print(f"Original data: {len(etd)}, After removing outliers: {len(etd_cleaned)}")
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Box plot to visualize outliers
-plt.figure(figsize=(12, 6))
-sns.boxplot(data=etd_numeric_imputed[['IA_REGRESSION_PATH_DURATION']])
-plt.title('Box Plot of Eye Tracking Metrics')
-plt.ylabel('Duration (ms)')
+# Plot cumulative explained variance
+plt.figure(figsize=(8, 5))
+plt.plot(np.cumsum(explained_variance), marker='o', linestyle='--', color='teal')
+plt.title('Cumulative Explained Variance by Principal Components')
+plt.xlabel('Number of Principal Components')
+plt.ylabel('Cumulative Explained Variance')
+plt.grid()
 plt.show()
 
-# Before and after cleaning comparison
-plt.figure(figsize=(12, 6))
-plt.subplot(1, 2, 1)
-sns.histplot(etd['IA_REGRESSION_PATH_DURATION'], kde=True)
-plt.title('Before Cleaning')
-
-plt.subplot(1, 2, 2)
-sns.histplot(etd_cleaned['IA_REGRESSION_PATH_DURATION'], kde=True)
-plt.title('After Cleaning')
+# Visualize Loadings as Heatmap
+plt.figure(figsize=(8, 6))
+sb.heatmap(loadings, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('PCA Loadings (Feature Contributions)')
 plt.tight_layout()
 plt.show()
 
-# Extract Regression Path Duration
-rpd = etd_cleaned['IA_REGRESSION_PATH_DURATION']
+# Output results
+print("Explained Variance Ratio:", explained_variance)
+print("\nLoadings:\n", loadings)
 
-# Validate RPD for physiological plausibility
-def validate_regression_path(regression_durations, min_duration=50, max_duration=5000):
-    """
-    Check if all regression path durations are physiologically plausible.
-    Typically between 50ms and 5000ms for reading tasks.
-    """
-    return (regression_durations >= min_duration) & (regression_durations <= max_duration)
-
-is_valid = validate_regression_path(rpd)
-print(f"All durations are valid: {is_valid}")
-
-# Find and remove invalid values
-invalid_values = rpd[~is_valid]
-rpd_cleaned = rpd[is_valid]
-
-print("\nShape before removing invalid values:", rpd.shape)
-print("Shape after removing invalid values:", rpd_cleaned.shape)
-
-# Extract Fixation Count (column 14)
-fix = etd_cleaned['IA_FIXATION_COUNT']
-
-# Check for Short Fixation Events (<50 ms)
-def short_fixations(fixation_count, threshold=50):
-    """
-    Check fixation counts are shorter than 50 ms, and remove them.
-    """
-    return (fixation_count < threshold)
-
-valid_fixation = short_fixations(fix)
-print(f"All fixations are valid: {valid_fixation}")
-
-# Initial Feature Engineering
-# L2 Proficiency vs. IA Dwell Time
-l2_proficiency = etd_cleaned['L2 PROFICIENCY']
-dwell_time = etd_cleaned['IA_DWELL_TIME']
-
-plt.figure(figsize=(10, 6))
-plt.bar(etd_cleaned['L2 PROFICIENCY'], etd_cleaned['IA_DWELL_TIME'], color='skyblue')
-plt.xlabel('L2 Proficiency')
-plt.ylabel('IA Dwell Time (ms)')
-plt.title('IA Dwell Time vs. L2 Proficiency')
-plt.show()
-
-# L2 Proficiency vs. IA Fixation Count
-fixation_count = etd_cleaned['IA_FIXATION_COUNT']
-
-plt.figure(figsize=(10, 6))
-plt.bar(etd_cleaned['L2 PROFICIENCY'], fixation_count, color='black')
-plt.xlabel('L2 Proficiency')
-plt.ylabel('IA Fixation Count (ms)')
-plt.title('IA Fixation Count vs. L2 Proficiency')
-plt.show()
-
-# L2 Proficiency vs. Regression In/Out
-grouped_data = etd_cleaned.groupby('L2 PROFICIENCY').agg({
-    'IA_REGRESSION_IN_COUNT': 'mean',
-    'IA_REGRESSION_OUT_COUNT': 'mean'
-}).reset_index()
-
-fig, ax = plt.subplots(figsize=(10, 6))
-
-barWidth = 0.35
-positions1 = np.arange(len(grouped_data))
-positions2 = [x + barWidth for x in positions1]
-
-ax.bar(positions1, grouped_data['IA_REGRESSION_IN_COUNT'], width=barWidth,
-       color='skyblue', label='Regression In')
-ax.bar(positions2, grouped_data['IA_REGRESSION_OUT_COUNT'], width=barWidth,
-       color='lightgreen', label='Regression Out')
-
-ax.set_xlabel('L2 Proficiency Group')
-ax.set_ylabel('Average Regression Count')
-ax.set_title('Regression In/Out Count by L2 Proficiency Level')
-ax.set_xticks([r + barWidth/2 for r in range(len(grouped_data))])
-ax.set_xticklabels(grouped_data['L2 PROFICIENCY'])
-ax.legend()
-
-plt.grid(axis='y', alpha=0.7)
-plt.tight_layout()
-plt.show()
-
-# No Code Switching Chinese vs. English IA Fixation Count
-fixation_count = etd_cleaned['IA_FIXATION_COUNT']
-
-plt.figure(figsize=(10, 6))
-plt.bar(etd_cleaned['CONDITION'], fixation_count, color='black')
-plt.xlabel('Language')
-plt.ylabel('IA Fixation Count (ms)')
-plt.title('IA Fixation Count vs. Language')
-plt.show()
+# Step 10. Initial Data Visualization

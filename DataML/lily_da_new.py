@@ -11,14 +11,12 @@ from sklearn.metrics import classification_report, accuracy_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
 
 # --- Step 0: Load the dataset from Sheet1 ---
-file_path = '/Users/Meihui/Documents/code switch/NeurotechUSC-Bilingual-Code-Switching-1/updated_IA_CS.xlsx'
+file_path = '/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/EyeMovementData/updated_IA_CS.xlsx'
 df = pd.read_excel(file_path, sheet_name="Sheet1")
-print("First few rows of the dataset:")
-print(df.head())
 
 # --- Identify numeric columns (features) ---
 numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-print("\nNumeric columns detected before excluding target:", numeric_cols)
+print("\nNumeric columns detected:", numeric_cols)
 
 # Exclude the target label column ("Switch Label") from features if present.
 target_column = "Switch Label"
@@ -68,7 +66,7 @@ for i, ratio in enumerate(pca.explained_variance_ratio_, start=1):
 
 # (Optional) Save the PCA-transformed features for further modeling.
 processed_df = pd.DataFrame(features_pca)
-processed_df.to_csv('/Users/Meihui/Documents/code switch/processed_features.csv', index=False)
+processed_df.to_csv('/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/DataML', index=False)
 print("Processed data saved to processed_features.csv")
 
 # --- Step 5: Prepare Data for Modeling ---
