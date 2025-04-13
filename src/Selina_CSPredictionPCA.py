@@ -2,9 +2,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
-from sklearn.impute import SimpleImputer
+from scipy import stats
+import h2o
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from h2o.estimators import H2ORandomForestEstimator
 
 # Step 1. Load the dataset
 file_path = '/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/EyeMovementData/IA_data.xlsx'
@@ -14,7 +16,7 @@ etd = pd.read_excel(file_path)
 print("Initial shape:", etd.shape)
 print("\nMissing values:\n", etd.isna().sum())
 
-# Step 3. Numeric Feature Selection
+# Step 3. Feature Selection
 exclude_columns = [
     'TRIAL_INDEX',       # Often contains trial identifiers (non-predictive)
     'IA_ID',             # Item/area identifiers (categorical)
@@ -24,6 +26,10 @@ exclude_columns = [
 ]
 features = etd.drop(columns=exclude_columns, errors='ignore')
 
+print("After Excluding Columns:", features.columns.tolist())
+
+print(features['LANGUAGE'].unique())
+
 # Step 4: Create Code-Switching Labels
 # 0 = non-switch; 1 = C to E / pre-switch; 2: C to E / post-switch; 3 = E to C / pre-switch; 4 = E to C / post-switch
 # Initialize all labels to 0 (non-switch)
@@ -31,43 +37,51 @@ features['Switch Label'] = 0
 
 # Map conditions to label groups
 condition_groups = {
-    # Chinese-to-English switch conditions
-    (3, 5, 7): {
+    ('condition 3', 'condition 5', 'condition 7'): {
         'C': 1,  # Pre-switch (C → E)
         'E': 2   # Post-switch (C → E)
     },
-    # English-to-Chinese switch conditions
-    (4, 6, 8): {
+    ('condition 4', 'condition 6', 'condition 8'): {
         'E': 3,  # Pre-switch (E → C)
         'C': 4   # Post-switch (E → C)
     }
 }
 
 # Apply label mapping
-for condition_nums, lang_labels in condition_groups.items():
-    for num in condition_nums:
-        col_name = f'condition {num}'
-        if col_name in features.columns:
-            # For Chinese language ('C')
-            mask_c = (features[col_name] == 1) & (features['LANGUAGE_C'] == 1)
-            features.loc[mask_c, 'Switch Label'] = lang_labels['C']
-
-            # For English language ('E')
-            mask_e = (features[col_name] == 1) & (features['LANGUAGE_E'] == 1)
-            features.loc[mask_e, 'Switch Label'] = lang_labels['E']
+for condition, lang_map in condition_groups.items():
+    mask = features['CONDITION'].isin(condition)
+    for lang, label in lang_map.items():
+        features.loc[mask & (features['LANGUAGE'] == lang), 'Switch Label'] = label
 
 features['Switch Label'] = features['Switch Label'].astype(int)
-print("Columns in features_imputed:", features.columns.tolist())
+print("Columns after Adding Switch Label:", features.columns.tolist())
 
-# Step 5: Perform one-hot encoding for categorical columns
+print("Unique classes:", np.unique(features['Switch Label']))
+print("Switch Label distribution:", features['Switch Label'].value_counts())
+
+# Step 5: Split Numeric & Categorical Features
 categorical_cols = ['L2 PROFICIENCY', 'CONDITION', 'LANGUAGE']
-features = pd.get_dummies(features, columns=categorical_cols)
+features[categorical_cols] = features[categorical_cols].astype('category')
+numeric_cols = [
+    'IA_FIRST_FIXATION_DURATION',
+    'IA_FIRST_RUN_DWELL_TIME',
+    'IA_REGRESSION_PATH_DURATION',
+    'IA_DWELL_TIME',
+    'IA_FIRST_SACCADE_AMPLITUDE',
+    'IA_FIXATION_COUNT',
+    'IA_SKIP',
+    'IA_FIRST_RUN_FIXATION_COUNT',
+    'IA_REGRESSION_IN_COUNT',
+    'Switch Label'
+]
 
-# Step 6. Missing Value Handling
+# Step 6. Missing Value Handling (numeric)
 # Strategy: Remove high-missing columns first
-missing_pct = features.isna().mean() * 100
+missing_pct = features[numeric_cols].isna().mean() * 100
 high_missing = missing_pct[missing_pct > 30].index
 features = features.drop(columns=high_missing)
+
+print("After Removal of High Missing:", features.columns.tolist())
 
 # Remove critical missing rows
 critical_cols = [
@@ -77,34 +91,20 @@ critical_cols = [
     'IA_FIRST_SACCADE_AMPLITUDE'
 ]
 features = features.dropna(subset=critical_cols)
+print("After Removal of Critical Columns:", features.columns.tolist())
 
-# Impute remaining missing values
-imputer = SimpleImputer(strategy='mean')
-features_imputed = pd.DataFrame(imputer.fit_transform(features),
-                               columns=features.columns)
-
-# Step 6. Imputation of Features Visualization (Before/After)
-plt.figure(figsize=(10, 6))
-sb.kdeplot(etd['IA_DWELL_TIME'], label='Original', color='blue')
-sb.kdeplot(features_imputed['IA_DWELL_TIME'], label='Cleaned', color='green')
-plt.title('Data Distribution Before/After Cleaning')
-plt.xlabel('IA_DWELL_TIME')
-plt.ylabel('Density')
-plt.legend()
-plt.show()
-
-# Step 8. Outlier Detection
-from scipy import stats
-z_scores = np.abs(stats.zscore(features_imputed))
+# Step 7. Outlier Detection
+z_scores = np.abs(stats.zscore(features[numeric_cols]))
 outliers_mask = (z_scores > 3).any(axis=1)
 print(f"Found {outliers_mask.sum()} potential outliers")
-features_cleaned = features_imputed[~outliers_mask]
 
-print(features_imputed.shape)
-print(features_cleaned.shape)
+clean_indices = features[numeric_cols][~outliers_mask].index
+features_numeric_cleaned = features.loc[clean_indices, numeric_cols]
+features_categorical_cleaned = features.loc[clean_indices, categorical_cols]
 
+features_cleaned = pd.concat([features_numeric_cleaned, features_categorical_cleaned], axis=1)
 
-# Filter the features DataFrame to include only the 10 IA features
+# Step 11: Define PCA Features of Note
 pca_features = [
     'IA_FIRST_FIXATION_DURATION',
     'IA_FIRST_RUN_DWELL_TIME',
@@ -116,11 +116,16 @@ pca_features = [
     'IA_FIRST_RUN_FIXATION_COUNT',
     'IA_REGRESSION_IN_COUNT'
 ]
-features_filtered = features_scaled[pca_features]
+
+linguistic_features = ['L2 PROFICIENCY', 'CONDITION', 'LANGUAGE']
+
+# Step 8: Feature Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(features_cleaned[pca_features])
 
 # Step 9. Principal Component Analysis
 pca = PCA(n_components=0.95)  # Automatically select components to explain 95% variance
-features_pca = pca.fit_transform(features_filtered)
+X_pca = pca.fit_transform(X_scaled)
 explained_variance = pca.explained_variance_ratio_
 
 loadings = pd.DataFrame(
@@ -148,5 +153,3 @@ plt.show()
 # Output results
 print("Explained Variance Ratio:", explained_variance)
 print("\nLoadings:\n", loadings)
-
-# Step 10. Initial Data Visualization

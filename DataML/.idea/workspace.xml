@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6bb2e7ce-3687-4ce9-8bbe-07fbd457d774" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../BilingualCodeSwitching/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../BilingualCodeSwitching/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../BilingualCodeSwitching/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../BilingualCodeSwitching/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/BilingualCodeSwitching.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ML_Eye-Tracking.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Selina_CSPredictionPCA.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Selina_CSPredictionRandomForests.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Selina_Data_Analysis.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cleaned_data.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lily_da_new.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../EyeMovementData/Descriptions.R" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../EyeMovementData/IA_data.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../EyeMovementData/Sentences.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../EyeMovementData/Technical_validation.R" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../EyeMovementData/updated_IA_CS.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../EyeMovementData/~$IA_data.xlsx" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2u5zl9fHIXeNqUzckjBHVHHIsxe" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python tests.Python tests in Selina_Data_Analysis.py.executor": "Run",
+    "Python.Selina_CSPredictionPCA.executor": "Run",
+    "Python.Selina_CSPredictionRandomForests.executor": "Run",
+    "Python.Selina_CSPredictionSVM.executor": "Run",
+    "Python.Selina_Data_Analysis.executor": "Run",
+    "Python.Selina_RandomForests.executor": "Run",
+    "Python.lily_da_new.executor": "Run",
+    "Python.selina_MLmain.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/DataML",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "ts.external.directory.path": "/Applications/PyCharm.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="selina_MLmain" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="BilingualCodeSwitching" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/selina_MLmain.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.selina_MLmain" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-PY-242.21829.153" />
+        <option value="bundled-python-sdk-464836ebc622-b74155a9e76b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.21829.153" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6bb2e7ce-3687-4ce9-8bbe-07fbd457d774" name="Changes" comment="" />
+      <created>1741553372276</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1741553372276</updated>
+      <workItem from="1741553384110" duration="606000" />
+      <workItem from="1741657565284" duration="2201000" />
+      <workItem from="1741659788089" duration="2191000" />
+      <workItem from="1741994719456" duration="1011000" />
+      <workItem from="1742862130889" duration="9508000" />
+      <workItem from="1743023662897" duration="7326000" />
+      <workItem from="1743132200487" duration="1056000" />
+      <workItem from="1743145595584" duration="3789000" />
+      <workItem from="1743230742885" duration="14027000" />
+      <workItem from="1743471397952" duration="9000" />
+      <workItem from="1743471409130" duration="5000" />
+      <workItem from="1743471417409" duration="1463000" />
+      <workItem from="1743482792336" duration="313000" />
+      <workItem from="1743876136898" duration="1000" />
+      <workItem from="1743876142210" duration="46453000" />
+      <workItem from="1744061808793" duration="4031000" />
+      <workItem from="1744067700145" duration="3092000" />
+      <workItem from="1744420418988" duration="15476000" />
+      <workItem from="1744518850205" duration="14793000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$Selina_Data_Analysis.coverage" NAME="Selina_Data_Analysis Coverage Results" MODIFIED="1744523655213" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$Selina_CSPredictionSVM.coverage" NAME="Selina_CSPredictionSVM Coverage Results" MODIFIED="1744520095974" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$.coverage" NAME=" Coverage Results" MODIFIED="1744430907641" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$Selina_CSPredictionRandomForests.coverage" NAME="Selina_CSPredictionRandomForests Coverage Results" MODIFIED="1743397675735" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$Selina_RandomForests.coverage" NAME="Selina_RandomForests Coverage Results" MODIFIED="1744532747395" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$selina_MLmain.coverage" NAME="selina_MLmain Coverage Results" MODIFIED="1744533505966" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$lily_da_new.coverage" NAME="lily_da_new Coverage Results" MODIFIED="1743916522655" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Selina_Data_Analysis_py$Selina_CSPredictionPCA.coverage" NAME="Selina_CSPredictionPCA Coverage Results" MODIFIED="1744529980481" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>
