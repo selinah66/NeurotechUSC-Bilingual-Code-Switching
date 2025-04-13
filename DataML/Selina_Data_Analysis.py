@@ -10,15 +10,11 @@ from sklearn.decomposition import PCA
 file_path = '/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/EyeMovementData/IA_data.xlsx'
 etd = pd.read_excel(file_path)
 
-# Step 2. Target Separation, separate target FIRST to prevent data leakage
-target = etd['Switch Label'] if 'Switch Label' in etd else None
-features = etd.drop(columns=['Switch Label'], errors='ignore')
+# Step 2. Initial Data Inspection
+print("Initial shape:", etd.shape)
+print("\nMissing values:\n", etd.isna().sum())
 
-# Step 3. Initial Data Inspection
-print("Initial shape:", features.shape)
-print("\nMissing values:\n", features.isna().sum())
-
-# Step 4. Numeric Feature Selection
+# Step 3. Numeric Feature Selection
 exclude_columns = [
     'TRIAL_INDEX',       # Often contains trial identifiers (non-predictive)
     'IA_ID',             # Item/area identifiers (categorical)
@@ -26,15 +22,48 @@ exclude_columns = [
     'TRIAL_LABEL', # Label identifier for specific sentence
     'IA_LABEL', # Specific Word/Character
 ]
-features = features.drop(columns=exclude_columns, errors='ignore')
+features = etd.drop(columns=exclude_columns, errors='ignore')
 
-# Perform one-hot encoding for categorical columns
+# Step 4: Create Code-Switching Labels
+# 0 = non-switch; 1 = C to E / pre-switch; 2: C to E / post-switch; 3 = E to C / pre-switch; 4 = E to C / post-switch
+# Initialize all labels to 0 (non-switch)
+features['Switch Label'] = 0
+
+# Map conditions to label groups
+condition_groups = {
+    # Chinese-to-English switch conditions
+    (3, 5, 7): {
+        'C': 1,  # Pre-switch (C → E)
+        'E': 2   # Post-switch (C → E)
+    },
+    # English-to-Chinese switch conditions
+    (4, 6, 8): {
+        'E': 3,  # Pre-switch (E → C)
+        'C': 4   # Post-switch (E → C)
+    }
+}
+
+# Apply label mapping
+for condition_nums, lang_labels in condition_groups.items():
+    for num in condition_nums:
+        col_name = f'condition {num}'
+        if col_name in features.columns:
+            # For Chinese language ('C')
+            mask_c = (features[col_name] == 1) & (features['LANGUAGE_C'] == 1)
+            features.loc[mask_c, 'Switch Label'] = lang_labels['C']
+
+            # For English language ('E')
+            mask_e = (features[col_name] == 1) & (features['LANGUAGE_E'] == 1)
+            features.loc[mask_e, 'Switch Label'] = lang_labels['E']
+
+features['Switch Label'] = features['Switch Label'].astype(int)
+print("Columns in features_imputed:", features.columns.tolist())
+
+# Step 5: Perform one-hot encoding for categorical columns
 categorical_cols = ['L2 PROFICIENCY', 'CONDITION', 'LANGUAGE']
 features = pd.get_dummies(features, columns=categorical_cols)
 
-print(features.dtypes)
-
-# Step 5. Missing Value Handling
+# Step 6. Missing Value Handling
 # Strategy: Remove high-missing columns first
 missing_pct = features.isna().mean() * 100
 high_missing = missing_pct[missing_pct > 30].index
@@ -64,16 +93,18 @@ plt.ylabel('Density')
 plt.legend()
 plt.show()
 
-# Step 7. Feature Scaling
-scaler = StandardScaler()
-features_scaled = pd.DataFrame(scaler.fit_transform(features_imputed), columns=features_imputed.columns)
-
 # Step 8. Outlier Detection
 from scipy import stats
-z_scores = np.abs(stats.zscore(features_scaled))
+z_scores = np.abs(stats.zscore(features_imputed))
 outliers_mask = (z_scores > 3).any(axis=1)
 print(f"Found {outliers_mask.sum()} potential outliers")
+features_cleaned = features_imputed[~outliers_mask]
 
+print(features_imputed.shape)
+print(features_cleaned.shape)
+
+
+# Filter the features DataFrame to include only the 10 IA features
 pca_features = [
     'IA_FIRST_FIXATION_DURATION',
     'IA_FIRST_RUN_DWELL_TIME',
@@ -85,8 +116,6 @@ pca_features = [
     'IA_FIRST_RUN_FIXATION_COUNT',
     'IA_REGRESSION_IN_COUNT'
 ]
-
-# Filter the features DataFrame to include only the 10 IA features
 features_filtered = features_scaled[pca_features]
 
 # Step 9. Principal Component Analysis
