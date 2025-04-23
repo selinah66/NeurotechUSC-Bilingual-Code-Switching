@@ -1,8 +1,18 @@
 import numpy as np
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, LabelEncoder
 from scipy.stats import iqr
 from config_lang import removed_cols, PROTECTED_COLUMNS
+
+
+# New: Add categorical encoding
+def encode_categorical(df, cat_cols=['L2 PROFICIENCY']):
+    """Convert categorical columns to numeric"""
+    le = LabelEncoder()
+    for col in cat_cols:
+        if col in df.columns:
+            df[col] = le.fit_transform(df[col])
+    return df
 
 
 def filter_rows(df, critical_cols=None, regex_pattern=r'^[a-zA-Z]', verbose=True):
@@ -33,10 +43,31 @@ def filter_rows(df, critical_cols=None, regex_pattern=r'^[a-zA-Z]', verbose=True
     return df
 
 
-def preprocess_pipeline(df, numeric_cols, critical_cols):
+def modified_scaling(df, numeric_cols, outlier_threshold=3):
+    """Robust scaling with outlier clipping"""
+    # Ensure numeric_cols only contains numerical columns
+    numeric_cols = [col for col in numeric_cols if col in df.select_dtypes(include=np.number).columns]
+
+    for col in numeric_cols:
+        q1 = df[col].quantile(0.25)
+        q3 = df[col].quantile(0.75)
+        iqr_val = iqr(df[col])
+        lower = q1 - (outlier_threshold * iqr_val)
+        upper = q3 + (outlier_threshold * iqr_val)
+        df[col] = df[col].clip(lower, upper)
+
+    scaler = RobustScaler()
+    df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
+    return df
+
+
+def preprocess_pipeline(df, numeric_cols, critical_cols, return_steps=False):
     """Streamlined preprocessing pipeline"""
+    # Stage 0: Encode categorical variables
+    df = encode_categorical(df.copy())
+
     # Stage 1: Initial cleaning
-    df_filtered = filter_rows(df.copy(), critical_cols=critical_cols)
+    df_filtered = filter_rows(df, critical_cols=critical_cols)
 
     # Stage 2: Imputation
     df_imputed = df_filtered.copy()
@@ -53,19 +84,11 @@ def preprocess_pipeline(df, numeric_cols, critical_cols):
     # Stage 3: Scaling
     df_processed = modified_scaling(df_imputed, numeric_cols)
 
-    return df_processed
-
-
-def modified_scaling(df, numeric_cols, outlier_threshold=3):
-    """Robust scaling with outlier clipping"""
-    for col in numeric_cols:
-        q1 = df[col].quantile(0.25)
-        q3 = df[col].quantile(0.75)
-        iqr_val = iqr(df[col])
-        lower = q1 - (outlier_threshold * iqr_val)
-        upper = q3 + (outlier_threshold * iqr_val)
-        df[col] = df[col].clip(lower, upper)
-
-    scaler = RobustScaler()
-    df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
-    return df
+    if return_steps:
+        return {
+            'filtered': df_filtered,
+            'imputed': df_imputed,
+            'processed': df_processed  # Make sure this key exists
+        }
+    else:
+        return df_processed

@@ -2,29 +2,27 @@ import pandas as pd
 import numpy as np
 from config_lang import target_column
 from sklearn.ensemble import RandomForestClassifier
-from src.langProficiency.config_lang import RANDOM_STATE, MAX_DEPTH, N_ESTIMATORS
+from config_lang import RANDOM_STATE, MAX_DEPTH, N_ESTIMATORS
 import matplotlib.pyplot as plt
 
 
 def create_temporal_features(df):
-    """Create temporal features using AGGREGATED columns"""
+    """Create temporal features using aggregated columns"""
     df = df.copy()
 
-    # 1. Use aggregated duration features
+    # Create derived features
     df['regression_dwell_ratio'] = \
-        df['IA_REGRESSION_PATH_DURATION_mean'] / (df['IA_DWELL_TIME_mean'] + 1e-6)
+        df['IA_REGRESSION_PATH_DURATION'] / (df['IA_DWELL_TIME'] + 1e-6)
 
-    # 2. Use aggregated fixation count
     df['fixation_density'] = \
-        df['IA_FIXATION_COUNT_mean'] / (df['IA_DWELL_TIME_mean'] + 1e-6)
+        df['IA_FIXATION_COUNT'] / (df['IA_DWELL_TIME'] + 1e-6)
 
-    # 3. Log transform aggregated first fixation
-    df['log_first_fixation'] = np.log1p(df['IA_FIRST_FIXATION_DURATION_mean'])
+    df['log_first_fixation'] = np.log1p(df['IA_FIRST_FIXATION_DURATION'])
 
-    # 4. Safe speed calculation with aggregated values
     df['saccade_speed'] = \
-        df['IA_FIRST_SACCADE_AMPLITUDE_mean'] / (df['IA_FIRST_FIXATION_DURATION_mean'] + 1e-6)
+        df['IA_FIRST_SACCADE_AMPLITUDE'] / (df['IA_FIRST_FIXATION_DURATION'] + 1e-6)
 
+    # Keep both original and engineered features
     return df
 
 def aggregate_features(df, features, group_col="RECORDING_SESSION_LABEL"):
@@ -44,12 +42,14 @@ def aggregate_features(df, features, group_col="RECORDING_SESSION_LABEL"):
     }
     # Group and aggregate
     grouped = df.groupby(group_col).agg(agg_dict)
-    grouped.columns = [f'{col}_{stat}' for col, stat in grouped.columns]
+    
+    # Clean up column names by removing the _mean suffix
+    grouped.columns = [col for col, _ in grouped.columns]
 
     return grouped.reset_index()
 
 
-def select_top_features(X, y, n_features=10):
+def select_top_features(X, y, n_features=5):
     """Return selected features and their names"""
     rf = RandomForestClassifier()
     rf.fit(X, y)
