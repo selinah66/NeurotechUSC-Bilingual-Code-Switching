@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 # Step 1. Load the dataset
-file_path = '/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/EyeMovementData/IA_data.xlsx'
+file_path = '/Users/Selina/Documents/GitHub/NeurotechUSC-Bilingual-Code-Switching/Data/RawEyeMovement.xlsx'
 etd = pd.read_excel(file_path)
 
 # Step 2. Initial Data Inspection
