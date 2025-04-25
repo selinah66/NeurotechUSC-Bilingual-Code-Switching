@@ -60,7 +60,7 @@ git commit -m "Describe your update"
 ```
 7. Push to the branch:
 ```bash
-git push (folder path)')
+git push (folder path)
 ```
 
 9. Open a Pull Request by going to the original repository and clicking "Pull requests" -> "New pull request" to submit your changes.
