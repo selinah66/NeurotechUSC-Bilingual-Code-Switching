@@ -16,17 +16,17 @@ The project uses data from [Wang et al., 2025] (https://www.nature.com/articles/
 ## Installation Instructions
 1. Open Terminal (on Mac/Linux) or Command Prompt (on Windows)
 2. Clone the Repository:
-'''bash
+```bash
 git clone https://github.com/selinah66/NeurotechUSC-Bilingual-Code-Switching.git
-'''
+```
 4. Navigate to Project Directory:
-'''bash
+```bash
    cd NeurotechUSC-Bilingual-Code-Switching (or your own project folder's file path)
-'''
+```
 6. Install required Python packages:
-'''bash
+```bash
    pip install pandas numpy scikit-learn matplotlib seaborn
-'''
+```
 
 ## Usage
 Run Python scripts in any IDE (e.g., Visual Studio Code, PyCharm, or Xcode) to preprocess data, engineer features, and train Random Forest models.
@@ -51,15 +51,20 @@ Run Python scripts in any IDE (e.g., Visual Studio Code, PyCharm, or Xcode) to p
 ## Contributing to the Repository
 1. Fork the repository: Click 'Fork' to create a copy in your account
 2. Create a new branch labelled with your new update:
-'''bash
+```bash
 git checkout -b (folder path)
-'''
+```
 5. Commit your changes:
-'''bash
+```bash
 git commit -m "Describe your update"
-'''
+```
 7. Push to the branch:
-'''bash
+```bash
 git push (folder path)')
-'''
+```
+
 9. Open a Pull Request by going to the original repository and clicking "Pull requests" -> "New pull request" to submit your changes.
+
+## License
+This project is for academic and educational purposes only.
+
