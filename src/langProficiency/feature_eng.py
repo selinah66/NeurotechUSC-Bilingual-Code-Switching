@@ -1,16 +1,13 @@
 import pandas as pd
 import numpy as np
-from config_lang import target_column
 from sklearn.ensemble import RandomForestClassifier
-from config_lang import RANDOM_STATE, MAX_DEPTH, N_ESTIMATORS
+from config_lang import RANDOM_STATE, MAX_DEPTH, N_ESTIMATORS, target_column
 import matplotlib.pyplot as plt
 
-
+# Create temporal features using aggregated columns
 def create_temporal_features(df):
-    """Create temporal features using aggregated columns"""
     df = df.copy()
 
-    # Create derived features
     df['regression_dwell_ratio'] = \
         df['IA_REGRESSION_PATH_DURATION'] / (df['IA_DWELL_TIME'] + 1e-6)
 
@@ -22,12 +19,11 @@ def create_temporal_features(df):
     df['saccade_speed'] = \
         df['IA_FIRST_SACCADE_AMPLITUDE'] / (df['IA_FIRST_FIXATION_DURATION'] + 1e-6)
 
-    # Keep both original and engineered features
     return df
 
+# Aggregate features by group and preserve features
 def aggregate_features(df, features, group_col="RECORDING_SESSION_LABEL"):
-    """Updated aggregation with validated features"""
-    # First validate all requested features exist
+    # Validate all requested features exist
     missing = [f for f in features if f not in df.columns]
     if missing:
         raise KeyError(f"Missing features for aggregation: {missing}")
@@ -40,17 +36,31 @@ def aggregate_features(df, features, group_col="RECORDING_SESSION_LABEL"):
         'IA_FIXATION_COUNT': ['mean'],
         'IA_FIRST_SACCADE_AMPLITUDE': ['mean']
     }
-    # Group and aggregate
-    grouped = df.groupby(group_col).agg(agg_dict)
     
-    # Clean up column names by removing the _mean suffix
-    grouped.columns = [col for col, _ in grouped.columns]
+    # Add Condition to Group By
+    if 'CONDITION' in df.columns:
+        # First get the condition for each recording session
+        condition_map = df.groupby(group_col)['CONDITION'].first()
+        
+        # Group and aggregate numeric features
+        grouped = df.groupby(group_col).agg(agg_dict)
+        
+        # Clean up column names by removing the _mean suffix
+        grouped.columns = [col for col, _ in grouped.columns]
+        
+        # Add condition back to the grouped data
+        grouped = grouped.reset_index()
+        grouped = grouped.merge(condition_map.reset_index(), on=group_col)
+    else:
+        # Original aggregation without condition
+        grouped = df.groupby(group_col).agg(agg_dict)
+        grouped.columns = [col for col, _ in grouped.columns]
+        grouped = grouped.reset_index()
 
-    return grouped.reset_index()
+    return grouped
 
-
+# Select top features using Random Forest
 def select_top_features(X, y, n_features=5):
-    """Return selected features and their names"""
     rf = RandomForestClassifier()
     rf.fit(X, y)
 
@@ -60,12 +70,12 @@ def select_top_features(X, y, n_features=5):
     }).sort_values('Importance', ascending=False)
 
     selected_features = importance.head(n_features)['Feature'].tolist()
-    return X[selected_features], selected_features  # Return names list
+    return X[selected_features], selected_features
 
+# Prepare train and test data
 def prepare_train_test_data(grouped_df, cleaned_df, group_col="RECORDING_SESSION_LABEL",
                             target_col=target_column):
-    """Simplified data preparation without subject IDs"""
-    # Merge with target
+
     target = cleaned_df.drop_duplicates(group_col).set_index(group_col)[target_col]
     data = grouped_df.merge(target, left_on=group_col, right_index=True)
 
@@ -79,4 +89,3 @@ def prepare_train_test_data(grouped_df, cleaned_df, group_col="RECORDING_SESSION
     y = data[target_col]
 
     return X, y
-

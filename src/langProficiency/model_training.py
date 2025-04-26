@@ -7,9 +7,8 @@ from sklearn.model_selection import RepeatedKFold, cross_validate, RandomizedSea
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from config_lang import RANDOM_STATE, N_ESTIMATORS, MAX_DEPTH, MIN_SAMPLES_LEAF, MIN_SAMPLES_SPLIT, N_SPLITS, N_REPEATS, MAX_FEATURES
 
-# === Core Model Training ===
+# Train random forest model
 def train_random_forest(X_train, y_train, X_test, y_test):
-    """Train and evaluate final model"""
     clf = RandomForestClassifier(
         class_weight='balanced',
         n_estimators=N_ESTIMATORS,
@@ -39,9 +38,8 @@ def train_random_forest(X_train, y_train, X_test, y_test):
     return clf
 
 
-# === Hyperparameter Tuning ===
+# Tune random forest model using RandomizedSearchCV to optimize hyperparameters and test CV configurations
 def tune_random_forest(X, y):
-    """Optimizes model params AND tests CV configurations"""
     model = RandomForestClassifier(
         class_weight='balanced',
         random_state=RANDOM_STATE,
@@ -72,7 +70,7 @@ def tune_random_forest(X, y):
 
     search.fit(X, y)
 
-    print("\n=== Best Overfitting-Reducing Configuration ===")
+    print("\nBest Overfitting-Reducing Configuration")
     print("Key parameters for generalization:")
     print(f"Best max_depth: {search.best_params_['max_depth']}")
     print(f"Best min_samples_split: {search.best_params_['min_samples_split']}")
@@ -82,9 +80,8 @@ def tune_random_forest(X, y):
 
     return search.best_estimator_
 
-# === Model Evaluation ===
+# Evaluate model performance using cross-validation
 def evaluate_model(model, X, y):
-    """Cross-validation with train/test metrics comparison"""
     cv = RepeatedKFold(n_splits=N_SPLITS, n_repeats=N_REPEATS)
     metrics = ['accuracy', 'f1_weighted']
 
@@ -94,11 +91,11 @@ def evaluate_model(model, X, y):
         y,
         cv=cv,
         scoring=metrics,
-        return_train_score=True,  # Critical for overfitting check
+        return_train_score=True,
         n_jobs=-1
     )
 
-    print("\n=== Overfitting Analysis ===")
+    print("\nOverfitting Analysis")
     print(f"Train Accuracy: {results['train_accuracy'].mean():.2f} (±{results['train_accuracy'].std():.2f})")
     print(f"Test Accuracy:  {results['test_accuracy'].mean():.2f} (±{results['test_accuracy'].std():.2f})")
     print(f"\nTrain F1: {results['train_f1_weighted'].mean():.2f} (±{results['train_f1_weighted'].std():.2f})")

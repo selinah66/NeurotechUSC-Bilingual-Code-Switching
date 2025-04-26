@@ -1,63 +1,104 @@
-# model_experiments.py
-
 import pandas as pd
-from collections import Counter
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
-from sklearn.metrics import accuracy_score, classification_report
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPClassifier
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from config_lang import (
+    CV_FOLDS, MAX_DEPTH, MAX_FEATURES, MIN_SAMPLES_LEAF,
+    MIN_SAMPLES_SPLIT, N_ESTIMATORS, RANDOM_STATE
+)
 
-# Assume X and y are already preprocessed and passed in
-def evaluate_models(X, y, top_features=None):
-    if top_features:
-        X = X[top_features]
-
-    # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
-
-    print("\n[Model Experimentation]")
-    print("Class distribution in the train set:", Counter(y_train))
-    print("Class distribution in the test set:", Counter(y_test))
-
-    ### Gradient Boosting
-    print("\n--- Gradient Boosting ---")
-    param_grid_gb = {
-        'n_estimators': [100, 200, 300],
-        'max_depth': [3, 5, 7],
-        'learning_rate': [0.01, 0.1, 0.2]
+# Compare performance of different classifiers using cross-validation
+def compare_classifiers(X, y, cv=CV_FOLDS):
+    """Compare performance of different classifiers using cross-validation."""
+    classifiers = {
+        'Random Forest': RandomForestClassifier(
+            n_estimators=N_ESTIMATORS,
+            max_depth=MAX_DEPTH,
+            min_samples_split=MIN_SAMPLES_SPLIT,
+            min_samples_leaf=MIN_SAMPLES_LEAF,
+            max_features=MAX_FEATURES,
+            random_state=RANDOM_STATE
+        ),
+        'Gradient Boosting': GradientBoostingClassifier(
+            n_estimators=N_ESTIMATORS,
+            max_depth=MAX_DEPTH,
+            random_state=RANDOM_STATE
+        ),
+        'SVM': SVC(random_state=RANDOM_STATE),
+        'Logistic Regression': LogisticRegression(max_iter=1000, random_state=RANDOM_STATE),
+        'Neural Network': MLPClassifier(hidden_layer_sizes=(100,), max_iter=1000, random_state=RANDOM_STATE)
     }
-    gb = GradientBoostingClassifier(random_state=42)
-    grid_search_gb = GridSearchCV(gb, param_grid=param_grid_gb, cv=3, n_jobs=-1, verbose=0)
-    grid_search_gb.fit(X_train, y_train)
-    gb_best = grid_search_gb.best_estimator_
-    gb_preds = gb_best.predict(X_test)
+    
+    results = {
+        name: {
+            'mean_accuracy': cross_val_score(clf, X, y, cv=cv, scoring='accuracy').mean(),
+            'std_accuracy': cross_val_score(clf, X, y, cv=cv, scoring='accuracy').std()
+        }
+        for name, clf in classifiers.items()
+    }
+    
+    # Plot results
+    plt.figure(figsize=(10, 6))
+    names = list(results.keys())
+    means = [results[name]['mean_accuracy'] for name in names]
+    stds = [results[name]['std_accuracy'] for name in names]
+    
+    plt.bar(names, means, yerr=stds, capsize=5)
+    plt.title('Classifier Performance Comparison')
+    plt.ylabel('Mean Accuracy (Cross-Validation)')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('classifier_comparison.png')
+    plt.show()
+    
+    return results
 
-    print("Best Gradient Boosting params:", grid_search_gb.best_params_)
-    print("Gradient Boosting Accuracy:", accuracy_score(y_test, gb_preds))
-    print(classification_report(y_test, gb_preds))
+# Analyze Random Forest stability across multiple runs
+def analyze_model_stability(X, y, n_iterations=10, cv=CV_FOLDS):
+    """Analyze Random Forest stability across multiple runs."""
+    accuracies = []
+    feature_importances = []
+    
+    for i in range(n_iterations):
+        rf = RandomForestClassifier(
+            n_estimators=N_ESTIMATORS,
+            max_depth=MAX_DEPTH,
+            min_samples_split=MIN_SAMPLES_SPLIT,
+            min_samples_leaf=MIN_SAMPLES_LEAF,
+            max_features=MAX_FEATURES,
+            random_state=RANDOM_STATE + i
+        )
+        accuracies.append(cross_val_score(rf, X, y, cv=cv).mean())
+        rf.fit(X, y)
+        feature_importances.append(rf.feature_importances_)
+    
+    # Print and plot results
+    print("\nModel Stability Analysis:")
+    print(f"Mean Accuracy: {np.mean(accuracies):.3f} ± {np.std(accuracies):.3f}")
+    
+    stability = np.std(feature_importances, axis=0)
+    plt.figure(figsize=(10, 6))
+    plt.bar(X.columns, stability)
+    plt.title('Feature Importance Stability')
+    plt.xlabel('Features')
+    plt.ylabel('Standard Deviation of Importance')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('feature_stability.png')
+    plt.show()
 
-    ### Logistic Regression
-    print("\n--- Logistic Regression ---")
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
-    log_reg = LogisticRegression(max_iter=1000, random_state=42)
-    log_reg.fit(X_train_scaled, y_train)
-    log_preds = log_reg.predict(X_test_scaled)
-
-    print("Logistic Regression Accuracy:", accuracy_score(y_test, log_preds))
-    print(classification_report(y_test, log_preds))
-
-    ### Support Vector Machine
-    print("\n--- Support Vector Machine (SVM) ---")
-    svm = SVC(kernel='rbf', random_state=42)
-    svm.fit(X_train_scaled, y_train)
-    svm_preds = svm.predict(X_test_scaled)
-
-    print("SVM Accuracy:", accuracy_score(y_test, svm_preds))
-    print(classification_report(y_test, svm_preds))
+if __name__ == "__main__":
+    # Import preprocessed data from main.py
+    from main import X, y
+    
+    # Run experiments
+    print("Classifier Comparison")
+    compare_classifiers(X, y)
+    
+    print("\nModel Stability Analysis")
+    analyze_model_stability(X, y)

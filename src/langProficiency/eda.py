@@ -5,4 +5,3 @@ def split_by_proficiency(df: pd.DataFrame):
     low_prof = df[df['L2 PROFICIENCY'] == 'L']
     high_prof = df[df['L2 PROFICIENCY'] == 'H']
     return low_prof, high_prof
-

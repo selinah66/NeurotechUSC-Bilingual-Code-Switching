@@ -1,12 +1,11 @@
 import numpy as np
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import RobustScaler, LabelEncoder
 from scipy.stats import iqr
-from config_lang import removed_cols, PROTECTED_COLUMNS
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder, RobustScaler
+from config_lang import PROTECTED_COLUMNS, removed_cols
 
-
-# New: Add categorical encoding
-def encode_categorical(df, cat_cols=['L2 PROFICIENCY']):
+# Add categorical encoding by converting to numeric
+def encode_categorical(df, cat_cols=['L2 PROFICIENCY', 'CONDITION']):
     """Convert categorical columns to numeric"""
     le = LabelEncoder()
     for col in cat_cols:
@@ -14,7 +13,7 @@ def encode_categorical(df, cat_cols=['L2 PROFICIENCY']):
             df[col] = le.fit_transform(df[col])
     return df
 
-
+# Filter rows based on regex pattern and remove null values
 def filter_rows(df, critical_cols=None, regex_pattern=r'^[a-zA-Z]', verbose=True):
     """Simplified row filtering without group dependencies"""
     # Language-based filtering
@@ -42,7 +41,7 @@ def filter_rows(df, critical_cols=None, regex_pattern=r'^[a-zA-Z]', verbose=True
 
     return df
 
-
+# Robust scaling with outlier clipping
 def modified_scaling(df, numeric_cols, outlier_threshold=3):
     """Robust scaling with outlier clipping"""
     # Ensure numeric_cols only contains numerical columns
@@ -60,7 +59,7 @@ def modified_scaling(df, numeric_cols, outlier_threshold=3):
     df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
     return df
 
-
+# Preprocessing pipeline
 def preprocess_pipeline(df, numeric_cols, critical_cols, return_steps=False):
     """Streamlined preprocessing pipeline"""
     # Stage 0: Encode categorical variables
@@ -88,7 +87,40 @@ def preprocess_pipeline(df, numeric_cols, critical_cols, return_steps=False):
         return {
             'filtered': df_filtered,
             'imputed': df_imputed,
-            'processed': df_processed  # Make sure this key exists
+            'processed': df_processed
         }
     else:
         return df_processed
+
+# Print comprehensive preprocessing metrics
+def print_preprocessing_metrics(df_before, df_after, numeric_cols, steps):
+    print("\nPreprocessing Metrics")
+    
+    # Null values
+    nulls_before = df_before.isnull().sum().sum()
+    nulls_after = df_after.isnull().sum().sum()
+    print(f"\nNull Values:")
+    print(f"Initial: {nulls_before} ({nulls_before/df_before.size:.1%})")
+    print(f"Final: {nulls_after} ({nulls_after/df_after.size:.1%})")
+    print(f"Reduction: {(nulls_before-nulls_after)/nulls_before:.1%}")
+    
+    # Class distribution
+    if 'L2 PROFICIENCY' in df_after.columns:
+        print("\nClass Distribution:")
+        print("Before balancing:", df_before['L2 PROFICIENCY'].value_counts(normalize=True))
+        print("After balancing:", df_after['L2 PROFICIENCY'].value_counts(normalize=True))
+    
+    # Outliers (if scaling was applied)
+    if 'scaling' in steps:
+        print("\nOutlier Handling:")
+        total_outliers = 0
+        for col in numeric_cols:
+            if col in df_before.columns:
+                q1 = df_before[col].quantile(0.25)
+                q3 = df_before[col].quantile(0.75)
+                iqr = q3 - q1
+                lower = q1 - 3*iqr
+                upper = q3 + 3*iqr
+                outliers = ((df_before[col] < lower) | (df_before[col] > upper)).sum()
+                total_outliers += outliers
+        print(f"Total outliers across all categories: {total_outliers} ({total_outliers/len(df_before):.1%})")

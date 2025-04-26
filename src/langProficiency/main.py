@@ -1,47 +1,60 @@
-from data_loader import load_data
-from preprocessing import preprocess_pipeline
-from feature_eng import aggregate_features, create_temporal_features, select_top_features, prepare_train_test_data
-from src.codeSwitching.config_switch import MAX_DEPTH
-from src.langProficiency.visualizations import plot_preprocessing_stages
-from visualizations import doGraphs, plot_feature_correlation, plot_feature_importance_analysis, visualize_decision_trees
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
-from model_training import train_random_forest, tune_random_forest, evaluate_model
-from config_lang import FILEPATH, numeric, critical, RANDOM_STATE, TEST_SIZE
+from config_lang import (
+    FILEPATH, MAX_DEPTH, numeric, critical, 
+    RANDOM_STATE, TEST_SIZE
+)
+from data_loader import load_data
+from feature_eng import (
+    aggregate_features, create_temporal_features, 
+    prepare_train_test_data, select_top_features
+)
+from model_training import (
+    evaluate_model, train_random_forest, 
+    tune_random_forest
+)
+from preprocessing import (
+    preprocess_pipeline, print_preprocessing_metrics
+)
+from visualizations import (
+    doGraphs, plot_descriptive_stats_comparison,
+    plot_feature_correlation, plot_feature_importance_analysis,
+    plot_preprocessing_stages, visualize_decision_trees
+)
 
 if __name__ == "__main__":
-    # 1. Load and visualize raw data
+    # Load and visualize raw data
     etd = load_data(FILEPATH)
-    doGraphs(etd, skipGraphs=True)
+    doGraphs(etd, skipGraphs=False)
 
-    # 2. Preprocess data
+    # Preprocess data
     etd_clean_steps = preprocess_pipeline(etd, numeric, critical, return_steps=True)
-    print("Available dictionary keys:", list(etd_clean_steps.keys()))
-    if 'processed' in etd_clean_steps:
-        print("Cleaned data columns:", etd_clean_steps['processed'].columns.tolist())
-    else:
-        # Try to find the final processed data
-        keys = list(etd_clean_steps.keys())
-        if keys:
-            print("Using alternative key:", keys[-1])
-            print("Cleaned data columns:", etd_clean_steps[keys[-1]].columns.tolist())
-        else:
-            print("No data returned from preprocessing pipeline")
-
+    
+    # Print preprocessing metrics
+    print_preprocessing_metrics(
+        etd, 
+        etd_clean_steps['processed'], 
+        numeric,
+        steps=['encoding', 'filtering', 'imputation', 'scaling']
+    )
+    
+    # Plot how features (Fixation Count) changes after each preprocessing stage
     plot_preprocessing_stages(etd_clean_steps, 'IA_FIXATION_COUNT')
+    
+    # Plot comparison of descriptive statistics before and after preprocessing
+    plot_descriptive_stats_comparison(etd_clean_steps, numeric)
 
-    # 3. Feature engineering
+    # Feature engineering by aggregating features and creating temporal features
     features_grouped = aggregate_features(etd_clean_steps['processed'], numeric)
-    print("\nFeatures after aggregation:")
-    print(features_grouped.columns.tolist())
+    print("\nFeatures after aggregation:", features_grouped.columns.tolist())
     
     engineered_data = create_temporal_features(features_grouped)
-    print("\nFeatures after engineering:")
-    print(engineered_data.columns.tolist())
+    print("\nFeatures after engineering:", engineered_data.columns.tolist())
 
-    # 4. Feature selection
+    # Feature selection
     X, y = prepare_train_test_data(engineered_data, etd_clean_steps['processed'])
-    print("\nFeatures in X:")
-    print(X.columns.tolist())
+    print("\nFeatures in X:", X.columns.tolist())
     
     X_selected, selected_features = select_top_features(X, y)
     print("\nSelected Features (Top 5):")
@@ -49,10 +62,10 @@ if __name__ == "__main__":
         print(f"{i}. {feature}")
     
     # Visualize feature correlations and importance
-    plot_feature_correlation(X, X.columns)  # Show correlation for all features
+    plot_feature_correlation(X, X.columns)
     plot_feature_importance_analysis(X, y, selected_features)
 
-    # 5. Split data
+    # Split data
     X_train, X_test, y_train, y_test = train_test_split(
         X_selected, y,
         test_size=TEST_SIZE,
@@ -60,12 +73,16 @@ if __name__ == "__main__":
         random_state=RANDOM_STATE
     )
 
-    # 6. Model training and evaluation
+    # Model training and evaluation
+    # Tune Random Forest classifier for best performance
     best_model = tune_random_forest(X_selected, y)
     test_score = best_model.score(X_test, y_test)
     print(f"Final test score: {test_score:.2f}")
 
+    # Train final RF model
     final_model = train_random_forest(X_train, y_train, X_test, y_test)
+
+    # Evaluate final RF model
     evaluate_model(final_model, X_selected, y)
     print(f"Train Accuracy: {final_model.score(X_train, y_train):.2f}")
     print(f"Test Accuracy: {final_model.score(X_test, y_test):.2f}")
