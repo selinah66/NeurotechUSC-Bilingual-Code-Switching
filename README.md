@@ -32,17 +32,17 @@ git clone https://github.com/selinah66/NeurotechUSC-Bilingual-Code-Switching.git
 Run Python scripts in any IDE (e.g., Visual Studio Code, PyCharm, or Xcode) to preprocess data, engineer features, and train Random Forest models.
 
 ## Repository Structure
-/config/ - Scripts for constants and other original info.
+/config/ - Scripts for configuration settings for each method step, including constants and other parameters.
 
 /data_loader/ - Scripts to load data onto IDE
 
 /preprocessing/ — Scripts for data cleaning and imputation
 
-/feature_eng/ — Scripts for generating new eye-movement features
+/feature_eng/ — Scripts for generating new eye-movement features, aggregation, and selecting top features for model
 
 /eda/ - Scripts for splitting the data by L2 proficiency level
 
-/model_experiments/ - Scripts for exploration of other models possibly used for task
+/model_experiments/ - Scripts for exploration of model selection process, and comparison of accuracy and evaluation metrics
 
 /model_training/ — Random Forest training, hyperparameter tuning, evaluation
 
