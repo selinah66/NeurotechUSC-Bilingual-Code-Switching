@@ -19,11 +19,11 @@ The project uses data from [Wang et al., 2025] (https://www.nature.com/articles/
 ```bash
 git clone https://github.com/selinah66/NeurotechUSC-Bilingual-Code-Switching.git
 ```
-4. Navigate to Project Directory:
+3. Navigate to Project Directory:
 ```bash
    cd NeurotechUSC-Bilingual-Code-Switching (or your own project folder's file path)
 ```
-6. Install required Python packages:
+4. Install required Python packages:
 ```bash
    pip install pandas numpy scikit-learn matplotlib seaborn
 ```
@@ -54,16 +54,15 @@ Run Python scripts in any IDE (e.g., Visual Studio Code, PyCharm, or Xcode) to p
 ```bash
 git checkout -b (folder path)
 ```
-5. Commit your changes:
+3. Commit your changes:
 ```bash
 git commit -m "Describe your update"
 ```
-7. Push to the branch:
+4. Push to the branch:
 ```bash
 git push (folder path)
 ```
-
-9. Open a Pull Request by going to the original repository and clicking "Pull requests" -> "New pull request" to submit your changes.
+5. Open a Pull Request by going to the original repository and clicking "Pull requests" -> "New pull request" to submit your changes.
 
 ## License
 This project is for academic and educational purposes only.
